@@ -25,9 +25,27 @@ io.on("connection", (socket) => {
         console.log(data);
         const { emailId, roomId } = data;
         emailToSocketIdMap.set(emailId, socket.id);
+        io.to(roomId).emit("user:joined", { emailId, id: socket.id })
+        socket.join(roomId)
         socketIdToEmail.set(socket.id, emailId);
 
         io.to(socket.id).emit("room:join", data);
+
+        // const room = io.sockets.adapter.rooms.get(roomId);
+        // const numberOfClients = room ? room.size : 0;
+        // console.log(numberOfClients)
+        const room = io.sockets.adapter.rooms.get(roomId);
+
+        if (room) {
+            const clients = [];
+            room.forEach((socketId) => {
+                const socketData = socketIdToEmail.get(socketId);
+                if (socketData) {
+                    clients.push({ socketId, socketData });
+                }
+            });
+            io.to(roomId).emit("room:clients", { room: clients });
+        }
     });
 
     // Handle disconnection

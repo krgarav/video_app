@@ -1,18 +1,33 @@
-import React, { useEffect, useState,useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSocket } from "../../context/socketProvider";
 import ReactPlayer from "react-player";
+import { useParams } from "react-router-dom";
 const Room = () => {
   const [myStream, setMyStream] = useState(null);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [selectedCamera, setSelectedCamera] = useState("");
+  const [connectedUser, setConnectedUser] = useState([]);
   const socket = useSocket();
+  const { roomId } = useParams();
   useEffect(() => {
     socket.on("user:joined", handleUserJoin);
+    socket.on("room:clients", handleRoomMember);
     return () => {
       socket.off("user:joined", handleUserJoin);
+      socket.off("room:clients", handleUserJoin);
     };
   }, [socket]);
-  const handleUserJoin = () => {};
+  const handleRoomMember = useCallback((data) => {
+    setConnectedUser(data.room)
+    console.log(data.room)
+    // console.log(data)
+  }, []);
+  const handleUserJoin = useCallback((data) => {
+    // setConnectedUser((prev) => {
+    //   return [...prev, data];
+    // });
+    
+  }, []);
   const getuserMediaStream = useCallback(async () => {
     try {
       setMyStream(null);
@@ -50,7 +65,7 @@ const Room = () => {
   };
   return (
     <>
-      <div>Room</div>
+      <div>Room {roomId}</div>
       <div>
         {availableCameras.length > 0 && (
           <select value={selectedCamera} onChange={handleCameraChange}>
@@ -74,6 +89,13 @@ const Room = () => {
             playing
           />
         )}
+        <div>
+          Users Connected:
+          {connectedUser.map((item) => {
+            return <h2>{item.socketData}</h2>;
+          })}
+        </div>
+        <button>Call</button>
       </div>
     </>
   );
